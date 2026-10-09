@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='11' cy='16' r='9' fill='%2338d6c4'/%3E%3Ccircle cx='21' cy='16' r='9' fill='%23ff5c8a' fill-opacity='.8'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
 <style>
-:root{--bg:#0e0d1a;--panel:#17152a;--line:#2d2a4d;--text:#f1eefc;--muted:#9a95c0;--left:#38d6c4;--right:#ff5c8a;--amber:#ffc857;--track:#2a2748;--l:0;--r:0}
+:root{--bg:#0e0d1a;--panel:#17152a;--line:#2d2a4d;--text:#f1eefc;--muted:#9a95c0;--left:#38d6c4;--right:#ff5c8a;--amber:#ffc857;--violet:#8b7bff;--track:#2a2748;--l:0;--r:0}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{background:var(--bg)}
 body{font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);min-height:100dvh;display:flex;justify-content:center;padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));-webkit-user-select:none;user-select:none;overflow-x:hidden}
@@ -57,9 +57,9 @@ canvas{width:100%;height:100%;display:block}
 .play.on .i-pause{display:block}
 
 .stage{border-radius:24px;padding:20px 18px 18px}
-.stage-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
-.stage-top span{color:var(--muted);font-size:.9rem}
-#panVal{font-family:Syne,sans-serif;font-weight:700;font-size:1.25rem;color:var(--text);font-variant-numeric:tabular-nums}
+.stage-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:16px}
+.stage-top span{color:var(--muted);font-size:.9rem;flex:none}
+#panVal{font-family:Syne,sans-serif;font-weight:700;font-size:1.15rem;color:var(--text);font-variant-numeric:tabular-nums;text-align:right}
 .meters{display:flex;gap:4px;height:30px;margin:0 14px}
 .m{flex:1;position:relative;-webkit-mask-image:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 8px);mask-image:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 8px)}
 .m b{position:absolute;inset:0;transform:scaleX(0)}
@@ -72,16 +72,20 @@ canvas{width:100%;height:100%;display:block}
 .tick.b{left:calc(14px + (100% - 28px) * .75)}
 .lr{display:flex;justify-content:space-between;font-weight:700;font-size:.8rem;margin:0 2px}
 .lr .a{color:var(--left)}.lr .b{color:var(--right)}
+.lr.v{margin-top:10px}.lr.v .a{color:var(--violet)}.lr.v .b{color:var(--amber)}
+.lr.v + .pan-wrap{margin-top:0}
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;background:transparent;cursor:pointer;touch-action:pan-y;--thumb:28px;position:relative}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--bgtrack,var(--track))}
 input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--bgtrack,var(--track))}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:var(--thumb);height:var(--thumb);border-radius:50%;background:var(--amber);border:4px solid var(--bg);margin-top:calc((6px - var(--thumb))/2);box-shadow:0 0 0 2px var(--amber)}
 input[type=range]::-moz-range-thumb{width:calc(var(--thumb) - 8px);height:calc(var(--thumb) - 8px);border-radius:50%;background:var(--amber);border:4px solid var(--bg);box-shadow:0 0 0 2px var(--amber)}
 #pan{--bgtrack:linear-gradient(90deg,var(--left),rgba(255,255,255,.2) 50%,var(--right))}
-.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
-.seg button{height:44px;border-radius:12px;border:1px solid var(--line);font-size:.9rem;font-weight:500;transition:background .15s,border-color .15s}
+#height{--bgtrack:linear-gradient(90deg,var(--violet),rgba(255,255,255,.2) 50%,var(--amber))}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.seg button{height:44px;border-radius:12px;border:1px solid var(--line);font-size:.85rem;font-weight:500;transition:background .15s,border-color .15s}
 .seg button:hover{background:rgba(255,255,255,.06)}
 .seg button[aria-pressed=true]{background:var(--amber);color:#1a1300;border-color:var(--amber);font-weight:700}
+.hint{color:var(--muted);font-size:.78rem;margin-top:12px;line-height:1.4}
 
 .vol{display:flex;align-items:center;gap:6px;padding:6px 10px 6px 6px}
 .vol input{--thumb:22px;--bgtrack:linear-gradient(90deg,var(--text) var(--fill,80%),var(--track) var(--fill,80%))}
@@ -90,7 +94,7 @@ input[type=range]::-moz-range-thumb{width:calc(var(--thumb) - 8px);height:calc(v
 #volPct{width:3ch;text-align:right;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .status{text-align:center;font-size:.85rem;color:var(--muted);min-height:1.3em}
 .status.err{color:#ff7b7b}
-@media(max-width:480px){h1{font-size:1.6rem}.panel{padding:16px}.stage{padding:18px 14px 14px}.wave-wrap{height:96px}.transport{gap:6px}}
+@media(max-width:480px){h1{font-size:1.6rem}.panel{padding:16px}.stage{padding:18px 14px 14px}.wave-wrap{height:96px}.transport{gap:6px}.seg button{font-size:.8rem}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -98,7 +102,7 @@ input[type=range]::-moz-range-thumb{width:calc(var(--thumb) - 8px);height:calc(v
 <main class="app">
   <header>
     <div class="mark" aria-hidden="true"><i></i><i></i></div>
-    <div><h1>Ro zDir</h1><p class="tag">Drop a track, then place it in the stereo field.</p></div>
+    <div><h1>Ro zDir</h1><p class="tag">Drop a track, then place it anywhere around your head.</p></div>
   </header>
 
   <div class="drop" id="drop" role="button" tabindex="0" aria-label="Choose an audio file">
@@ -125,21 +129,31 @@ input[type=range]::-moz-range-thumb{width:calc(var(--thumb) - 8px);height:calc(v
   </div>
 
   <section class="panel stage">
-    <div class="stage-top"><span>Stereo balance</span><b id="panVal">Center</b></div>
+    <div class="stage-top"><span>Direction</span><b id="panVal">Center</b></div>
     <div class="meters" aria-hidden="true"><div class="m l"><b id="mL"></b></div><div class="m r"><b id="mR"></b></div></div>
     <div class="pan-wrap">
       <span class="tick a"></span><span class="tick c"></span><span class="tick b"></span>
-      <input type="range" id="pan" min="-2" max="2" step="0.01" value="0" aria-label="Pan left to right, up to 200 percent">
+      <input type="range" id="pan" min="-2" max="2" step="0.01" value="0" aria-label="Left to right, up to 200 percent">
     </div>
-    <div class="lr" aria-hidden="true"><span class="a">Far left</span><span class="b">Far right</span></div>
+    <div class="lr" aria-hidden="true"><span class="a">Left</span><span class="b">Right</span></div>
+
+    <div class="lr v" aria-hidden="true"><span class="a">Bottom</span><span class="b">Top</span></div>
+    <div class="pan-wrap">
+      <span class="tick a"></span><span class="tick c"></span><span class="tick b"></span>
+      <input type="range" id="height" min="-2" max="2" step="0.01" value="0" aria-label="Bottom to top, up to 200 percent">
+    </div>
+
     <div class="seg">
-      <button data-pan="-1" aria-pressed="false">Left</button>
-      <button data-pan="0" aria-pressed="true">Center</button>
-      <button data-pan="1" aria-pressed="false">Right</button>
-      <button data-pan="-2" aria-pressed="false">Far left</button>
-      <button id="sweepBtn" aria-pressed="false">Sweep</button>
-      <button data-pan="2" aria-pressed="false">Far right</button>
+      <button data-x="-1" aria-pressed="false">Left</button>
+      <button data-x="0" aria-pressed="true">Center</button>
+      <button data-x="1" aria-pressed="false">Right</button>
+      <button data-x="2" aria-pressed="false">Behind</button>
+      <button data-x="0" data-y="1" aria-pressed="false">Top</button>
+      <button data-x="0" data-y="-1" aria-pressed="false">Bottom</button>
+      <button id="spinBtn" aria-pressed="false">Spin</button>
+      <button id="flipBtn" aria-pressed="false">Flip</button>
     </div>
+    <p class="hint">100% is beside your ear or straight above or below you. 200% is directly behind you. Best on headphones.</p>
   </section>
 
   <section class="panel vol">
@@ -158,13 +172,13 @@ input[type=range]::-moz-range-thumb{width:calc(var(--thumb) - 8px);height:calc(v
 const $ = id => document.getElementById(id);
 const drop = $('drop'), fileInput = $('fileInput'), waveWrap = $('waveWrap'), canvas = $('wave'), cx = canvas.getContext('2d');
 const playBtn = $('playBtn'), stopBtn = $('stopBtn'), backBtn = $('backBtn'), fwdBtn = $('fwdBtn'), loopBtn = $('loopBtn');
-const pan = $('pan'), panVal = $('panVal'), volume = $('volume'), volPct = $('volPct'), muteBtn = $('muteBtn');
-const sweepBtn = $('sweepBtn'), mL = $('mL'), mR = $('mR'), root = document.documentElement;
+const pan = $('pan'), height = $('height'), panVal = $('panVal'), volume = $('volume'), volPct = $('volPct'), muteBtn = $('muteBtn');
+const spinBtn = $('spinBtn'), flipBtn = $('flipBtn'), mL = $('mL'), mR = $('mR'), root = document.documentElement;
 
-let ctx, panner, hrtf, dryG, wetG, gain, anL, anR, bufL, bufR;
+let ctx, panner, hrtf, lp, pk, ls, dryG, wetG, gain, anL, anR, bufL, bufR;
 let buffer = null, source = null, peaks = null;
 let startTime = 0, pauseOffset = 0, playing = false, loop = false, scrub = null;
-let sweeping = false, sweepT0 = 0, muted = false, lvl = [0, 0];
+let mode = null, modeT0 = 0, muted = false, lvl = [0, 0];
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const fmt = s => { s = Math.floor(s || 0); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
@@ -173,16 +187,19 @@ function setStatus(msg, err) { const s = $('status'); s.textContent = msg; s.cla
 function ensureContext() {
   if (!ctx) {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Dry path: normal stereo pan (up to 100%). Wet path: 3D HRTF panner (100% to 200%).
+    // Dry path: plain stereo pan. Wet path: 3D HRTF panner plus tone cues for behind, above and below.
     panner = ctx.createStereoPanner();
     hrtf = ctx.createPanner(); hrtf.panningModel = 'HRTF'; hrtf.distanceModel = 'inverse'; hrtf.refDistance = 1;
+    pk = ctx.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 8000; pk.Q.value = 1.2;
+    ls = ctx.createBiquadFilter(); ls.type = 'lowshelf'; ls.frequency.value = 220;
+    lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 22000; lp.Q.value = 0.5;
     dryG = ctx.createGain(); wetG = ctx.createGain();
     const mix = ctx.createGain(); gain = ctx.createGain();
     const split = ctx.createChannelSplitter(2);
     anL = ctx.createAnalyser(); anR = ctx.createAnalyser(); anL.fftSize = anR.fftSize = 512;
     bufL = new Float32Array(512); bufR = new Float32Array(512);
     panner.connect(dryG); dryG.connect(mix);
-    hrtf.connect(wetG); wetG.connect(mix);
+    hrtf.connect(pk); pk.connect(ls); ls.connect(lp); lp.connect(wetG); wetG.connect(mix);
     mix.connect(gain); gain.connect(ctx.destination);
     mix.connect(split); split.connect(anL, 0); split.connect(anR, 1);
     applyPan(true); applyVolume();
@@ -308,30 +325,47 @@ waveWrap.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') { e.preventDefault(); seekTo(position() - 5); }
 });
 
-/* ---------- pan (-200% to +200%) + volume ---------- */
+/* ---------- direction: left/right and bottom/top, each -200% to +200% ---------- */
+function setPos(x, y, z, t, tc) {
+  if (hrtf.positionX) {
+    hrtf.positionX.setTargetAtTime(x, t, tc);
+    hrtf.positionY.setTargetAtTime(y, t, tc);
+    hrtf.positionZ.setTargetAtTime(z, t, tc);
+  } else hrtf.setPosition(x, y, z);
+}
 function applyPan(instant) {
-  const v = parseFloat(pan.value), a = Math.abs(v), sg = v < 0 ? -1 : 1;
+  const x = parseFloat(pan.value), y = parseFloat(height.value);
+  const az = x * Math.PI / 2, el = y * Math.PI / 2;
+  // Direction around the head: front is -Z, right is +X, up is +Y. 100% = 90 degrees, 200% = 180 degrees (behind).
+  const dx = Math.sin(az) * Math.cos(el), dy = Math.sin(el), dz = -Math.cos(az) * Math.cos(el);
   if (ctx) {
-    const t = ctx.currentTime, tc = instant ? 0.001 : 0.015;
-    const wet = clamp((a - 1) / 0.25, 0, 1);                       // 0 up to 100%, fully 3D by 125%
-    const ang = (a <= 1 ? a * 90 : 90 + (a - 1) * 90) * Math.PI / 180; // 90° = ear level, 180° = directly behind
-    panner.pan.setTargetAtTime(clamp(v, -1, 1), t, tc);
+    const t = ctx.currentTime, tc = instant ? 0.001 : 0.02;
+    const wet = Math.max(clamp((Math.abs(x) - 1) / 0.25, 0, 1), clamp(Math.abs(y) / 0.2, 0, 1));
+    const up = Math.max(dy, 0), down = Math.max(-dy, 0), back = Math.max(dz, 0);
+    panner.pan.setTargetAtTime(clamp(x, -1, 1), t, tc);
     dryG.gain.setTargetAtTime(Math.cos(wet * Math.PI / 2), t, tc);
-    wetG.gain.setTargetAtTime(Math.sin(wet * Math.PI / 2), t, tc);
-    hrtf.positionX.setTargetAtTime(sg * Math.sin(ang), t, tc);
-    hrtf.positionY.setTargetAtTime(0, t, tc);
-    hrtf.positionZ.setTargetAtTime(-Math.cos(ang), t, tc);
+    wetG.gain.setTargetAtTime(Math.sin(wet * Math.PI / 2) * 1.3 * (1 - 0.2 * back), t, tc);
+    setPos(dx, dy, dz, t, tc);
+    pk.gain.setTargetAtTime(11 * up - 10 * down, t, tc);             // brighter above, duller below
+    ls.gain.setTargetAtTime(5 * down, t, tc);                        // heavier below
+    lp.frequency.setTargetAtTime(22000 * Math.pow(3200 / 22000, back), t, tc); // muffled behind
   }
-  panVal.textContent = a < 0.03 ? 'Center' : (v < 0 ? 'Left ' : 'Right ') + Math.round(a * 100) + '%';
-  document.querySelectorAll('[data-pan]').forEach(b => b.setAttribute('aria-pressed', !sweeping && Math.abs(parseFloat(b.dataset.pan) - v) < 0.03));
+  const part = (v, neg, pos) => Math.abs(v) < 0.03 ? '' : (v < 0 ? neg : pos) + ' ' + Math.round(Math.abs(v) * 100) + '%';
+  panVal.textContent = [part(x, 'Left', 'Right'), part(y, 'Bottom', 'Top')].filter(Boolean).join(', ') || 'Center';
+  document.querySelectorAll('[data-x]').forEach(b => b.setAttribute('aria-pressed',
+    !mode && Math.abs(parseFloat(b.dataset.x) - x) < 0.03 && Math.abs(parseFloat(b.dataset.y || 0) - y) < 0.03));
 }
-function setSweep(on) {
-  sweeping = on; sweepT0 = performance.now();
-  sweepBtn.setAttribute('aria-pressed', on); applyPan();
+function setMode(m) {
+  mode = m; modeT0 = performance.now();
+  spinBtn.setAttribute('aria-pressed', m === 'spin'); flipBtn.setAttribute('aria-pressed', m === 'flip');
+  applyPan();
 }
-pan.addEventListener('input', () => { if (sweeping) setSweep(false); applyPan(); });
-document.querySelectorAll('[data-pan]').forEach(b => b.onclick = () => { setSweep(false); pan.value = b.dataset.pan; applyPan(); });
-sweepBtn.onclick = () => setSweep(!sweeping);
+[pan, height].forEach(s => s.addEventListener('input', () => { if (mode) setMode(null); applyPan(); }));
+document.querySelectorAll('[data-x]').forEach(b => b.onclick = () => {
+  setMode(null); pan.value = b.dataset.x; height.value = b.dataset.y || 0; applyPan();
+});
+spinBtn.onclick = () => setMode(mode === 'spin' ? null : 'spin'); // circles around your head
+flipBtn.onclick = () => setMode(mode === 'flip' ? null : 'flip'); // loops over the top and underneath
 
 function applyVolume() {
   const v = parseFloat(volume.value);
@@ -343,14 +377,17 @@ function applyVolume() {
 volume.addEventListener('input', () => { muted = false; applyVolume(); });
 muteBtn.onclick = () => { muted = !muted; applyVolume(); };
 
-/* ---------- animation loop: playhead, sweep, meters ---------- */
+/* ---------- animation loop: playhead, spin/flip, meters ---------- */
 function level(an, buf) {
   an.getFloatTimeDomainData(buf);
   let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i];
   return clamp((20 * Math.log10(Math.sqrt(s / buf.length) + 1e-6) + 50) / 50, 0, 1);
 }
 function tick() {
-  if (sweeping) { pan.value = 2 * Math.sin((performance.now() - sweepT0) / 1000 * Math.PI * 2 / 8); applyPan(); }
+  if (mode) {
+    const v = ((performance.now() - modeT0) / 6000 % 1) * 4 - 2; // one full circle every 6 seconds
+    pan.value = mode === 'spin' ? v : 0; height.value = mode === 'flip' ? v : 0; applyPan();
+  }
   if (buffer && (playing || scrub !== null)) {
     $('cur').textContent = fmt(scrub ?? position()); drawWave();
   }
