@@ -73,7 +73,6 @@ canvas{width:100%;height:100%;display:block}
 .lr{display:flex;justify-content:space-between;font-weight:700;font-size:.8rem;margin:0 2px}
 .lr .a{color:var(--left)}.lr .b{color:var(--right)}
 .lr.v{margin-top:10px}.lr.v .a{color:var(--violet)}.lr.v .b{color:var(--amber)}
-.lr.v + .pan-wrap{margin-top:0}
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;background:transparent;cursor:pointer;touch-action:pan-y;--thumb:28px;position:relative}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--bgtrack,var(--track))}
 input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--bgtrack,var(--track))}
@@ -85,6 +84,7 @@ input[type=range]::-moz-range-thumb{width:calc(var(--thumb) - 8px);height:calc(v
 .seg button{height:44px;border-radius:12px;border:1px solid var(--line);font-size:.85rem;font-weight:500;transition:background .15s,border-color .15s}
 .seg button:hover{background:rgba(255,255,255,.06)}
 .seg button[aria-pressed=true]{background:var(--amber);color:#1a1300;border-color:var(--amber);font-weight:700}
+#flipBtn{grid-column:span 2}
 .hint{color:var(--muted);font-size:.78rem;margin-top:12px;line-height:1.4}
 
 .vol{display:flex;align-items:center;gap:6px;padding:6px 10px 6px 6px}
@@ -102,7 +102,7 @@ input[type=range]::-moz-range-thumb{width:calc(var(--thumb) - 8px);height:calc(v
 <main class="app">
   <header>
     <div class="mark" aria-hidden="true"><i></i><i></i></div>
-    <div><h1>Ro zDir</h1><p class="tag">Drop a track, then place it anywhere around your head.</p></div>
+    <div><h1>Ro zDir</h1><p class="tag">Drop a track, then place it in one ear or around your head.</p></div>
   </header>
 
   <div class="drop" id="drop" role="button" tabindex="0" aria-label="Choose an audio file">
@@ -132,10 +132,10 @@ input[type=range]::-moz-range-thumb{width:calc(var(--thumb) - 8px);height:calc(v
     <div class="stage-top"><span>Direction</span><b id="panVal">Center</b></div>
     <div class="meters" aria-hidden="true"><div class="m l"><b id="mL"></b></div><div class="m r"><b id="mR"></b></div></div>
     <div class="pan-wrap">
-      <span class="tick a"></span><span class="tick c"></span><span class="tick b"></span>
-      <input type="range" id="pan" min="-2" max="2" step="0.01" value="0" aria-label="Left to right, up to 200 percent">
+      <span class="tick c"></span>
+      <input type="range" id="pan" min="-1" max="1" step="0.01" value="0" aria-label="Left to right">
     </div>
-    <div class="lr" aria-hidden="true"><span class="a">Left</span><span class="b">Right</span></div>
+    <div class="lr" aria-hidden="true"><span class="a">Left ear</span><span class="b">Right ear</span></div>
 
     <div class="lr v" aria-hidden="true"><span class="a">Bottom</span><span class="b">Top</span></div>
     <div class="pan-wrap">
@@ -147,13 +147,12 @@ input[type=range]::-moz-range-thumb{width:calc(var(--thumb) - 8px);height:calc(v
       <button data-x="-1" aria-pressed="false">Left</button>
       <button data-x="0" aria-pressed="true">Center</button>
       <button data-x="1" aria-pressed="false">Right</button>
-      <button data-x="2" aria-pressed="false">Behind</button>
+      <button id="spinBtn" aria-pressed="false">Sweep</button>
       <button data-x="0" data-y="1" aria-pressed="false">Top</button>
       <button data-x="0" data-y="-1" aria-pressed="false">Bottom</button>
-      <button id="spinBtn" aria-pressed="false">Spin</button>
       <button id="flipBtn" aria-pressed="false">Flip</button>
     </div>
-    <p class="hint">100% is beside your ear or straight above or below you. 200% is directly behind you. Best on headphones.</p>
+    <p class="hint">By 70% the far ear is completely silent, one ear only. Top and Bottom use 3D sound, so both ears play there. Best on headphones.</p>
   </section>
 
   <section class="panel vol">
@@ -187,7 +186,7 @@ function setStatus(msg, err) { const s = $('status'); s.textContent = msg; s.cla
 function ensureContext() {
   if (!ctx) {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Dry path: plain stereo pan. Wet path: 3D HRTF panner plus tone cues for behind, above and below.
+    // Dry path: hard stereo pan, the far ear goes fully silent. Wet path: 3D sound, only used for top and bottom.
     panner = ctx.createStereoPanner();
     hrtf = ctx.createPanner(); hrtf.panningModel = 'HRTF'; hrtf.distanceModel = 'inverse'; hrtf.refDistance = 1;
     pk = ctx.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 8000; pk.Q.value = 1.2;
@@ -325,7 +324,7 @@ waveWrap.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') { e.preventDefault(); seekTo(position() - 5); }
 });
 
-/* ---------- direction: left/right and bottom/top, each -200% to +200% ---------- */
+/* ---------- direction ---------- */
 function setPos(x, y, z, t, tc) {
   if (hrtf.positionX) {
     hrtf.positionX.setTargetAtTime(x, t, tc);
@@ -336,19 +335,18 @@ function setPos(x, y, z, t, tc) {
 function applyPan(instant) {
   const x = parseFloat(pan.value), y = parseFloat(height.value);
   const az = x * Math.PI / 2, el = y * Math.PI / 2;
-  // Direction around the head: front is -Z, right is +X, up is +Y. 100% = 90 degrees, 200% = 180 degrees (behind).
   const dx = Math.sin(az) * Math.cos(el), dy = Math.sin(el), dz = -Math.cos(az) * Math.cos(el);
   if (ctx) {
     const t = ctx.currentTime, tc = instant ? 0.001 : 0.02;
-    const wet = Math.max(clamp((Math.abs(x) - 1) / 0.25, 0, 1), clamp(Math.abs(y) / 0.2, 0, 1));
+    const wet = clamp(Math.abs(y) / 0.2, 0, 1);                       // 3D sound only when height is moved
     const up = Math.max(dy, 0), down = Math.max(-dy, 0), back = Math.max(dz, 0);
-    panner.pan.setTargetAtTime(clamp(x, -1, 1), t, tc);
+    panner.pan.setTargetAtTime(clamp(x / 0.7, -1, 1), t, tc);        // far ear fully silent from 70%
     dryG.gain.setTargetAtTime(Math.cos(wet * Math.PI / 2), t, tc);
     wetG.gain.setTargetAtTime(Math.sin(wet * Math.PI / 2) * 1.3 * (1 - 0.2 * back), t, tc);
     setPos(dx, dy, dz, t, tc);
     pk.gain.setTargetAtTime(11 * up - 10 * down, t, tc);             // brighter above, duller below
     ls.gain.setTargetAtTime(5 * down, t, tc);                        // heavier below
-    lp.frequency.setTargetAtTime(22000 * Math.pow(3200 / 22000, back), t, tc); // muffled behind
+    lp.frequency.setTargetAtTime(22000 * Math.pow(3200 / 22000, back), t, tc);
   }
   const part = (v, neg, pos) => Math.abs(v) < 0.03 ? '' : (v < 0 ? neg : pos) + ' ' + Math.round(Math.abs(v) * 100) + '%';
   panVal.textContent = [part(x, 'Left', 'Right'), part(y, 'Bottom', 'Top')].filter(Boolean).join(', ') || 'Center';
@@ -364,7 +362,7 @@ function setMode(m) {
 document.querySelectorAll('[data-x]').forEach(b => b.onclick = () => {
   setMode(null); pan.value = b.dataset.x; height.value = b.dataset.y || 0; applyPan();
 });
-spinBtn.onclick = () => setMode(mode === 'spin' ? null : 'spin'); // circles around your head
+spinBtn.onclick = () => setMode(mode === 'spin' ? null : 'spin'); // sweeps ear to ear
 flipBtn.onclick = () => setMode(mode === 'flip' ? null : 'flip'); // loops over the top and underneath
 
 function applyVolume() {
@@ -377,7 +375,7 @@ function applyVolume() {
 volume.addEventListener('input', () => { muted = false; applyVolume(); });
 muteBtn.onclick = () => { muted = !muted; applyVolume(); };
 
-/* ---------- animation loop: playhead, spin/flip, meters ---------- */
+/* ---------- animation loop ---------- */
 function level(an, buf) {
   an.getFloatTimeDomainData(buf);
   let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i];
@@ -385,8 +383,10 @@ function level(an, buf) {
 }
 function tick() {
   if (mode) {
-    const v = ((performance.now() - modeT0) / 6000 % 1) * 4 - 2; // one full circle every 6 seconds
-    pan.value = mode === 'spin' ? v : 0; height.value = mode === 'flip' ? v : 0; applyPan();
+    const ph = ((performance.now() - modeT0) / 6000) % 1;
+    if (mode === 'spin') { pan.value = Math.sin(ph * Math.PI * 2); height.value = 0; }
+    else { pan.value = 0; height.value = ph * 4 - 2; }
+    applyPan();
   }
   if (buffer && (playing || scrub !== null)) {
     $('cur').textContent = fmt(scrub ?? position()); drawWave();
