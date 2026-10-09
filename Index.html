@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0d1a">
+<title>Ro zDir</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='11' cy='16' r='9' fill='%2338d6c4'/%3E%3Ccircle cx='21' cy='16' r='9' fill='%23ff5c8a' fill-opacity='.8'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#0e0d1a;--panel:#17152a;--line:#2d2a4d;--text:#f1eefc;--muted:#9a95c0;--left:#38d6c4;--right:#ff5c8a;--amber:#ffc857;--track:#2a2748;--l:0;--r:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);min-height:100dvh;display:flex;justify-content:center;padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));-webkit-user-select:none;user-select:none;overflow-x:hidden}
+body::before,body::after{content:"";position:fixed;top:0;bottom:0;width:55vw;pointer-events:none;z-index:-1;will-change:opacity}
+body::before{left:0;background:radial-gradient(ellipse 100% 60% at 0 50%,rgba(56,214,196,.45),transparent 70%);opacity:calc(.1 + var(--l)*.9)}
+body::after{right:0;background:radial-gradient(ellipse 100% 60% at 100% 50%,rgba(255,92,138,.45),transparent 70%);opacity:calc(.1 + var(--r)*.9)}
+.app{width:100%;max-width:560px;display:flex;flex-direction:column;gap:14px;margin:auto 0}
+header{display:flex;align-items:center;gap:12px;padding:4px 4px 6px}
+.mark{width:40px;height:28px;position:relative;flex:none}
+.mark i{position:absolute;top:0;width:28px;height:28px;border-radius:50%}
+.mark i:first-child{left:0;background:var(--left)}
+.mark i:last-child{right:0;background:var(--right);mix-blend-mode:screen;opacity:.9}
+h1{font-family:Syne,sans-serif;font-weight:800;font-size:1.9rem;letter-spacing:-.03em;line-height:1}
+.tag{color:var(--muted);font-size:.85rem;margin-top:3px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.35;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+svg{display:block;fill:currentColor}
+
+.drop{display:flex;align-items:center;gap:14px;padding:22px 18px;border:2px dashed var(--line);border-radius:16px;cursor:pointer;transition:border-color .2s,background .2s}
+.drop:hover,.drop.dragover{border-color:var(--amber);background:rgba(255,200,87,.06)}
+.drop.loaded{border:1px solid var(--line);background:var(--panel);padding:14px 18px}
+.drop svg{width:28px;height:28px;color:var(--amber);flex:none}
+.drop .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.drop strong{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drop small{color:var(--muted);font-size:.8rem}
+.drop .go{font-size:.85rem;font-weight:700;color:var(--amber);flex:none}
+#fileInput{display:none}
+
+.wave-wrap{position:relative;height:110px;cursor:pointer;touch-action:pan-y;border-radius:12px}
+canvas{width:100%;height:100%;display:block}
+.times{display:flex;justify-content:space-between;margin-top:10px;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.times #cur{color:var(--text);font-weight:700}
+
+.transport{display:flex;align-items:center;justify-content:center;gap:10px}
+.tb{min-width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:var(--muted);font-size:.8rem;font-weight:700;transition:background .15s,color .15s,transform .1s}
+.tb:hover:not(:disabled){background:rgba(255,255,255,.07);color:var(--text)}
+.tb:active:not(:disabled){transform:scale(.92)}
+.tb svg{width:22px;height:22px}
+.tb[aria-pressed=true]{color:var(--amber);background:rgba(255,200,87,.12)}
+.play{width:76px;height:76px;border-radius:50%;background:var(--amber);color:#1a1300;display:grid;place-items:center;box-shadow:0 8px 30px rgba(255,200,87,.3);transition:transform .1s,box-shadow .2s}
+.play:active:not(:disabled){transform:scale(.94)}
+.play svg{width:32px;height:32px}
+.play .i-pause,.play.on .i-play{display:none}
+.play.on .i-pause{display:block}
+
+.stage{border-radius:24px;padding:20px 18px 18px}
+.stage-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
+.stage-top span{color:var(--muted);font-size:.9rem}
+#panVal{font-family:Syne,sans-serif;font-weight:700;font-size:1.25rem;color:var(--text);font-variant-numeric:tabular-nums}
+.meters{display:flex;gap:4px;height:30px;margin:0 14px}
+.m{flex:1;position:relative;-webkit-mask-image:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 8px);mask-image:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 8px)}
+.m b{position:absolute;inset:0;transform:scaleX(0)}
+.m.l{background:rgba(56,214,196,.14)}.m.l b{background:var(--left);transform-origin:100% 50%}
+.m.r{background:rgba(255,92,138,.14)}.m.r b{background:var(--right);transform-origin:0 50%}
+.pan-wrap{position:relative;margin-top:6px}
+.tick{position:absolute;top:50%;width:2px;height:16px;background:var(--muted);opacity:.5;transform:translate(-50%,-50%) translateY(-1px);border-radius:1px}
+.tick.c{left:50%;height:20px}
+.tick.a{left:calc(14px + (100% - 28px) * .25)}
+.tick.b{left:calc(14px + (100% - 28px) * .75)}
+.lr{display:flex;justify-content:space-between;font-weight:700;font-size:.8rem;margin:0 2px}
+.lr .a{color:var(--left)}.lr .b{color:var(--right)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;background:transparent;cursor:pointer;touch-action:pan-y;--thumb:28px;position:relative}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--bgtrack,var(--track))}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--bgtrack,var(--track))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:var(--thumb);height:var(--thumb);border-radius:50%;background:var(--amber);border:4px solid var(--bg);margin-top:calc((6px - var(--thumb))/2);box-shadow:0 0 0 2px var(--amber)}
+input[type=range]::-moz-range-thumb{width:calc(var(--thumb) - 8px);height:calc(var(--thumb) - 8px);border-radius:50%;background:var(--amber);border:4px solid var(--bg);box-shadow:0 0 0 2px var(--amber)}
+#pan{--bgtrack:linear-gradient(90deg,var(--left),rgba(255,255,255,.2) 50%,var(--right))}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.seg button{height:44px;border-radius:12px;border:1px solid var(--line);font-size:.9rem;font-weight:500;transition:background .15s,border-color .15s}
+.seg button:hover{background:rgba(255,255,255,.06)}
+.seg button[aria-pressed=true]{background:var(--amber);color:#1a1300;border-color:var(--amber);font-weight:700}
+
+.vol{display:flex;align-items:center;gap:6px;padding:6px 10px 6px 6px}
+.vol input{--thumb:22px;--bgtrack:linear-gradient(90deg,var(--text) var(--fill,80%),var(--track) var(--fill,80%))}
+.vol .tb svg{width:24px;height:24px}
+.vol .i-off,.vol.muted .i-on{display:none}.vol.muted .i-off{display:block}
+#volPct{width:3ch;text-align:right;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.status{text-align:center;font-size:.85rem;color:var(--muted);min-height:1.3em}
+.status.err{color:#ff7b7b}
+@media(max-width:480px){h1{font-size:1.6rem}.panel{padding:16px}.stage{padding:18px 14px 14px}.wave-wrap{height:96px}.transport{gap:6px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <div class="mark" aria-hidden="true"><i></i><i></i></div>
+    <div><h1>Ro zDir</h1><p class="tag">Drop a track, then place it in the stereo field.</p></div>
+  </header>
+
+  <div class="drop" id="drop" role="button" tabindex="0" aria-label="Choose an audio file">
+    <svg viewBox="0 0 24 24"><path d="M12 3 7 8h3.5v7h3V8H17zM5 17v3h14v-3h-2v1H7v-1z"/></svg>
+    <div class="t"><strong id="dropTitle">Drop an audio file</strong><small id="dropSub">or tap to browse. MP3, OGG, WAV, M4A, FLAC</small></div>
+    <span class="go" id="dropGo">Browse</span>
+    <input type="file" id="fileInput" accept="audio/*,.mp3,.ogg,.wav,.m4a,.aac,.flac">
+  </div>
+
+  <section class="panel">
+    <div class="wave-wrap" id="waveWrap" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><canvas id="wave"></canvas></div>
+    <div class="times"><span id="cur">0:00</span><span id="dur">0:00</span></div>
+  </section>
+
+  <div class="transport">
+    <button class="tb" id="loopBtn" aria-label="Loop" aria-pressed="false" disabled><svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z"/></svg></button>
+    <button class="tb" id="backBtn" aria-label="Back 10 seconds" disabled>−10s</button>
+    <button class="play" id="playBtn" aria-label="Play" disabled>
+      <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <svg class="i-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+    </button>
+    <button class="tb" id="fwdBtn" aria-label="Forward 10 seconds" disabled>+10s</button>
+    <button class="tb" id="stopBtn" aria-label="Stop" disabled><svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg></button>
+  </div>
+
+  <section class="panel stage">
+    <div class="stage-top"><span>Stereo balance</span><b id="panVal">Center</b></div>
+    <div class="meters" aria-hidden="true"><div class="m l"><b id="mL"></b></div><div class="m r"><b id="mR"></b></div></div>
+    <div class="pan-wrap">
+      <span class="tick a"></span><span class="tick c"></span><span class="tick b"></span>
+      <input type="range" id="pan" min="-2" max="2" step="0.01" value="0" aria-label="Pan left to right, up to 200 percent">
+    </div>
+    <div class="lr" aria-hidden="true"><span class="a">Far left</span><span class="b">Far right</span></div>
+    <div class="seg">
+      <button data-pan="-1" aria-pressed="false">Left</button>
+      <button data-pan="0" aria-pressed="true">Center</button>
+      <button data-pan="1" aria-pressed="false">Right</button>
+      <button data-pan="-2" aria-pressed="false">Far left</button>
+      <button id="sweepBtn" aria-pressed="false">Sweep</button>
+      <button data-pan="2" aria-pressed="false">Far right</button>
+    </div>
+  </section>
+
+  <section class="panel vol">
+    <button class="tb" id="muteBtn" aria-label="Mute">
+      <svg class="i-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+      <svg class="i-off" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9zm12.6 1.4L17 12l-1.4 1.6L17 15l1.4 1.4L20 15l1.6 1.4L23 15l-1.4-1.6L23 12l-1.4-1.4L20 12l-1.6-1.4L17 12z"/></svg>
+    </button>
+    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8" aria-label="Volume">
+    <span id="volPct">80</span>
+  </section>
+
+  <p class="status" id="status" aria-live="polite"></p>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const drop = $('drop'), fileInput = $('fileInput'), waveWrap = $('waveWrap'), canvas = $('wave'), cx = canvas.getContext('2d');
+const playBtn = $('playBtn'), stopBtn = $('stopBtn'), backBtn = $('backBtn'), fwdBtn = $('fwdBtn'), loopBtn = $('loopBtn');
+const pan = $('pan'), panVal = $('panVal'), volume = $('volume'), volPct = $('volPct'), muteBtn = $('muteBtn');
+const sweepBtn = $('sweepBtn'), mL = $('mL'), mR = $('mR'), root = document.documentElement;
+
+let ctx, panner, hrtf, dryG, wetG, gain, anL, anR, bufL, bufR;
+let buffer = null, source = null, peaks = null;
+let startTime = 0, pauseOffset = 0, playing = false, loop = false, scrub = null;
+let sweeping = false, sweepT0 = 0, muted = false, lvl = [0, 0];
+
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const fmt = s => { s = Math.floor(s || 0); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+function setStatus(msg, err) { const s = $('status'); s.textContent = msg; s.classList.toggle('err', !!err); }
+
+function ensureContext() {
+  if (!ctx) {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Dry path: normal stereo pan (up to 100%). Wet path: 3D HRTF panner (100% to 200%).
+    panner = ctx.createStereoPanner();
+    hrtf = ctx.createPanner(); hrtf.panningModel = 'HRTF'; hrtf.distanceModel = 'inverse'; hrtf.refDistance = 1;
+    dryG = ctx.createGain(); wetG = ctx.createGain();
+    const mix = ctx.createGain(); gain = ctx.createGain();
+    const split = ctx.createChannelSplitter(2);
+    anL = ctx.createAnalyser(); anR = ctx.createAnalyser(); anL.fftSize = anR.fftSize = 512;
+    bufL = new Float32Array(512); bufR = new Float32Array(512);
+    panner.connect(dryG); dryG.connect(mix);
+    hrtf.connect(wetG); wetG.connect(mix);
+    mix.connect(gain); gain.connect(ctx.destination);
+    mix.connect(split); split.connect(anL, 0); split.connect(anR, 1);
+    applyPan(true); applyVolume();
+  }
+  if (ctx.state === 'suspended') ctx.resume();
+}
+
+/* ---------- file ---------- */
+async function handleFile(file) {
+  if (!file) return;
+  if (!/\.(mp3|ogg|oga|wav|m4a|aac|flac|opus)$/i.test(file.name) && !file.type.startsWith('audio/')) {
+    setStatus('That is not an audio file. Choose an MP3, OGG, WAV, M4A or FLAC.', true); return;
+  }
+  setStatus('Decoding…');
+  try {
+    ensureContext(); killSource(); playing = false;
+    const data = await file.arrayBuffer();
+    buffer = await new Promise((ok, no) => ctx.decodeAudioData(data, ok, no));
+    pauseOffset = 0; scrub = null;
+    $('dropTitle').textContent = file.name;
+    $('dropSub').textContent = (buffer.numberOfChannels > 1 ? 'Stereo, ' : 'Mono, ') + fmt(buffer.duration);
+    $('dropGo').textContent = 'Change'; drop.classList.add('loaded');
+    [playBtn, stopBtn, backBtn, fwdBtn, loopBtn].forEach(b => b.disabled = false);
+    $('dur').textContent = fmt(buffer.duration);
+    waveWrap.setAttribute('aria-valuemax', Math.floor(buffer.duration));
+    computePeaks(); updateUI(); setStatus('Ready. Press play.');
+  } catch (e) {
+    console.error(e); setStatus('This file could not be decoded. Try another format.', true);
+  }
+}
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+fileInput.addEventListener('change', e => { handleFile(e.target.files[0]); fileInput.value = ''; });
+['dragenter', 'dragover'].forEach(n => document.addEventListener(n, e => { e.preventDefault(); drop.classList.add('dragover'); }));
+document.addEventListener('dragleave', e => { if (!e.relatedTarget) drop.classList.remove('dragover'); });
+document.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
+
+/* ---------- playback ---------- */
+function position() {
+  if (!buffer) return 0;
+  if (!playing) return pauseOffset;
+  let t = ctx.currentTime - startTime;
+  if (loop) t %= buffer.duration;
+  return Math.min(t, buffer.duration);
+}
+function killSource() {
+  if (!source) return;
+  const s = source; source = null; s.onended = null;
+  try { s.stop(); } catch (_) {} s.disconnect();
+}
+function play(offset) {
+  if (!buffer) return;
+  ensureContext(); killSource();
+  const s = ctx.createBufferSource();
+  s.buffer = buffer; s.loop = loop; s.connect(panner); s.connect(hrtf);
+  s.onended = () => { if (s !== source) return; source = null; playing = false; pauseOffset = 0; updateUI(); };
+  source = s; startTime = ctx.currentTime - offset; s.start(0, offset);
+  playing = true; updateUI();
+}
+function pause() { pauseOffset = position(); killSource(); playing = false; updateUI(); }
+function stop() { killSource(); playing = false; pauseOffset = 0; updateUI(); }
+function seekTo(t) {
+  t = clamp(t, 0, buffer.duration - 0.01);
+  if (playing) play(t); else { pauseOffset = t; updateUI(); }
+}
+const toggle = () => buffer && (playing ? pause() : play(pauseOffset));
+function updateUI() {
+  playBtn.classList.toggle('on', playing);
+  playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  const p = position();
+  $('cur').textContent = fmt(p); waveWrap.setAttribute('aria-valuenow', Math.floor(p));
+  drawWave();
+}
+playBtn.onclick = toggle; stopBtn.onclick = stop;
+backBtn.onclick = () => seekTo(position() - 10);
+fwdBtn.onclick = () => seekTo(position() + 10);
+loopBtn.onclick = () => {
+  const p = position(); loop = !loop;
+  if (source) source.loop = loop;
+  if (playing) startTime = ctx.currentTime - p;
+  loopBtn.setAttribute('aria-pressed', loop);
+};
+
+/* ---------- waveform ---------- */
+const STEP = 5;
+function computePeaks() {
+  const w = canvas.clientWidth; if (!buffer || !w) { peaks = null; return; }
+  const n = Math.floor(w / STEP), size = Math.floor(buffer.length / n), step = Math.max(1, Math.floor(size / 150));
+  const chans = Array.from({ length: buffer.numberOfChannels }, (_, i) => buffer.getChannelData(i));
+  peaks = new Float32Array(n); let top = 0;
+  for (let i = 0; i < n; i++) {
+    let m = 0;
+    for (const c of chans) for (let j = i * size; j < (i + 1) * size; j += step) { const v = Math.abs(c[j]); if (v > m) m = v; }
+    peaks[i] = m; if (m > top) top = m;
+  }
+  for (let i = 0; i < n; i++) peaks[i] = Math.sqrt(peaks[i] / (top || 1));
+}
+function drawWave() {
+  const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); computePeaks();
+  }
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, w, h);
+  const n = peaks ? peaks.length : Math.floor(w / STEP), off = (w - n * STEP) / 2;
+  const prog = buffer ? (scrub ?? position()) / buffer.duration : 0;
+  for (let i = 0; i < n; i++) {
+    const bh = Math.max(4, (peaks ? peaks[i] : 0.05) * (h - 8)), x = off + i * STEP, y = (h - bh) / 2;
+    cx.fillStyle = (i + 0.5) / n <= prog ? '#ffc857' : '#3a3763';
+    cx.beginPath(); cx.roundRect ? cx.roundRect(x, y, 3, bh, 1.5) : cx.rect(x, y, 3, bh); cx.fill();
+  }
+  if (buffer) { cx.fillStyle = '#fff'; cx.fillRect(clamp(prog * w, 1, w - 1) - 1, 0, 2, h); }
+}
+new ResizeObserver(() => { computePeaks(); drawWave(); }).observe(canvas);
+
+const timeAt = e => { const r = canvas.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * buffer.duration; };
+waveWrap.addEventListener('pointerdown', e => { if (!buffer) return; waveWrap.setPointerCapture(e.pointerId); scrub = timeAt(e); });
+waveWrap.addEventListener('pointermove', e => { if (scrub !== null) scrub = timeAt(e); });
+waveWrap.addEventListener('pointerup', () => { if (scrub !== null) { const t = scrub; scrub = null; seekTo(t); } });
+waveWrap.addEventListener('pointercancel', () => { scrub = null; });
+waveWrap.addEventListener('keydown', e => {
+  if (!buffer) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); seekTo(position() + 5); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); seekTo(position() - 5); }
+});
+
+/* ---------- pan (-200% to +200%) + volume ---------- */
+function applyPan(instant) {
+  const v = parseFloat(pan.value), a = Math.abs(v), sg = v < 0 ? -1 : 1;
+  if (ctx) {
+    const t = ctx.currentTime, tc = instant ? 0.001 : 0.015;
+    const wet = clamp((a - 1) / 0.25, 0, 1);                       // 0 up to 100%, fully 3D by 125%
+    const ang = (a <= 1 ? a * 90 : 90 + (a - 1) * 90) * Math.PI / 180; // 90° = ear level, 180° = directly behind
+    panner.pan.setTargetAtTime(clamp(v, -1, 1), t, tc);
+    dryG.gain.setTargetAtTime(Math.cos(wet * Math.PI / 2), t, tc);
+    wetG.gain.setTargetAtTime(Math.sin(wet * Math.PI / 2), t, tc);
+    hrtf.positionX.setTargetAtTime(sg * Math.sin(ang), t, tc);
+    hrtf.positionY.setTargetAtTime(0, t, tc);
+    hrtf.positionZ.setTargetAtTime(-Math.cos(ang), t, tc);
+  }
+  panVal.textContent = a < 0.03 ? 'Center' : (v < 0 ? 'Left ' : 'Right ') + Math.round(a * 100) + '%';
+  document.querySelectorAll('[data-pan]').forEach(b => b.setAttribute('aria-pressed', !sweeping && Math.abs(parseFloat(b.dataset.pan) - v) < 0.03));
+}
+function setSweep(on) {
+  sweeping = on; sweepT0 = performance.now();
+  sweepBtn.setAttribute('aria-pressed', on); applyPan();
+}
+pan.addEventListener('input', () => { if (sweeping) setSweep(false); applyPan(); });
+document.querySelectorAll('[data-pan]').forEach(b => b.onclick = () => { setSweep(false); pan.value = b.dataset.pan; applyPan(); });
+sweepBtn.onclick = () => setSweep(!sweeping);
+
+function applyVolume() {
+  const v = parseFloat(volume.value);
+  if (gain) gain.gain.setTargetAtTime(muted ? 0 : v, ctx.currentTime, 0.015);
+  volume.style.setProperty('--fill', (muted ? 0 : v * 100) + '%');
+  volPct.textContent = Math.round((muted ? 0 : v) * 100);
+  muteBtn.parentElement.classList.toggle('muted', muted || v === 0);
+}
+volume.addEventListener('input', () => { muted = false; applyVolume(); });
+muteBtn.onclick = () => { muted = !muted; applyVolume(); };
+
+/* ---------- animation loop: playhead, sweep, meters ---------- */
+function level(an, buf) {
+  an.getFloatTimeDomainData(buf);
+  let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i];
+  return clamp((20 * Math.log10(Math.sqrt(s / buf.length) + 1e-6) + 50) / 50, 0, 1);
+}
+function tick() {
+  if (sweeping) { pan.value = 2 * Math.sin((performance.now() - sweepT0) / 1000 * Math.PI * 2 / 8); applyPan(); }
+  if (buffer && (playing || scrub !== null)) {
+    $('cur').textContent = fmt(scrub ?? position()); drawWave();
+  }
+  const t = playing && anL ? [level(anL, bufL), level(anR, bufR)] : [0, 0];
+  lvl = lvl.map((v, i) => Math.max(t[i], v * 0.9));
+  if (lvl[0] > 0.005 || lvl[1] > 0.005 || t[0] === 0) {
+    mL.style.transform = 'scaleX(' + lvl[0] + ')'; mR.style.transform = 'scaleX(' + lvl[1] + ')';
+    root.style.setProperty('--l', lvl[0].toFixed(3)); root.style.setProperty('--r', lvl[1].toFixed(3));
+  }
+  requestAnimationFrame(tick);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,button,[role=slider],[role=button]')) return;
+  if (e.code === 'Space') { e.preventDefault(); toggle(); }
+});
+
+applyPan(); applyVolume(); drawWave(); tick();
+</script>
+</body>
+</html>
